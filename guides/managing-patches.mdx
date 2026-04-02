@@ -1,0 +1,45 @@
+---
+title: "Managing patches"
+description: "How to add, manage, and remove patch bundles in ReVanced Manager."
+---
+
+Patch bundles are JSON files that define the patches available in ReVanced Manager. They follow the [ReVanced API](https://github.com/revanced/revanced-api) format (for example: `https://api.revanced.app/v4/patches`).
+
+## Adding a patch bundle
+
+<Steps>
+  <Step title="Open the Patches tab">
+    Tap the **Patches** tab in the top navigation bar.
+  </Step>
+  <Step title="Enter edit mode">
+    Tap the floating edit (✏️) button in the bottom right corner. The button transitions into an add (+) button.
+  </Step>
+  <Step title="Tap the add button">
+    Tap the **+** button to open the source selection dialog.
+  </Step>
+  <Step title="Choose a source">
+    Select one of the following options:
+
+    - **Enter URL** — Add patches from a remote location by entering a URL
+    - **Select from storage** — Load a patch bundle JSON file from your device's storage
+  </Step>
+</Steps>
+
+<Note>
+  The file or URL must provide JSON in the [ReVanced API format](https://github.com/revanced/revanced-api). The default ReVanced patches are available at `https://api.revanced.app/v4/patches`.
+</Note>
+
+## Managing existing bundles
+
+Tap any bundle in the **Patches** tab to view its details or remove it. You can see which apps and versions each bundle supports from the bundle detail screen.
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Managing downloaders" icon="plug" href="/guides/managing-downloaders">
+    Install and trust downloader plugins
+  </Card>
+  <Card title="Patching apps" icon="syringe" href="/guides/patching-apps">
+    Apply patches to an Android app
+  </Card>
+</CardGroup>

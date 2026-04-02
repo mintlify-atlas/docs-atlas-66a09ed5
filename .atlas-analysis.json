@@ -1,0 +1,95 @@
+{
+  "projectType": "saas",
+  "projectName": "ReVanced Manager",
+  "projectDescription": "An Android application that uses ReVanced Patcher to patch apps on-device, enabling users to download, customize, and apply patches to Android apps.",
+  "theme": "almond",
+  "primaryColor": "#5095f1",
+  "lightColor": "#ca63ad",
+  "darkColor": "#242530",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "User Guide",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "prerequisites",
+              "installation"
+            ]
+          },
+          {
+            "group": "Using ReVanced Manager",
+            "pages": [
+              "guides/patching-apps",
+              "guides/managing-apps",
+              "guides/managing-patches",
+              "guides/managing-downloaders"
+            ]
+          },
+          {
+            "group": "Configuration & Updates",
+            "pages": [
+              "guides/settings",
+              "guides/updating"
+            ]
+          },
+          {
+            "group": "Troubleshooting",
+            "pages": [
+              "troubleshooting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Developer",
+        "groups": [
+          {
+            "group": "Building from Source",
+            "pages": [
+              "developer/building"
+            ]
+          },
+          {
+            "group": "Downloader API",
+            "pages": [
+              "developer/downloader-overview",
+              "developer/downloader-api",
+              "developer/downloader-webview"
+            ]
+          },
+          {
+            "group": "Contributing",
+            "pages": [
+              "developer/contributing"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Download apps automatically using the built-in downloader system",
+    "Patch Android apps by selecting and applying ReVanced patches on-device",
+    "Manage patched apps — view, re-patch, or uninstall",
+    "Manage patch bundles from remote URLs or local storage",
+    "Plugin-based downloader system with trust management",
+    "Import/export patch selections, patch options, and signing keystore",
+    "Automatic update checks for ReVanced Manager",
+    "Advanced safeguard settings for version compatibility"
+  ],
+  "publicApiSurface": [
+    "Downloader(name, block) — DSL function to define a downloader plugin",
+    "DownloaderScope.get(block) — Define the app lookup block",
+    "DownloaderScope.download(block) — Define the download block",
+    "GetScope.requestStartActivity(intent) — Request user interaction via activity",
+    "GetScope.requestStartFragment(clazz, args) — Launch a fragment for user interaction",
+    "DownloaderScope.useService(intent, block) — Bind and use an Android service",
+    "UserInteractionException — Sealed class for downloader interaction errors",
+    "Scope.hostPackageName — Package name of ReVanced Manager",
+    "Scope.downloaderPackageName — Package name of the downloader",
+    "Scope.dataDir — Persistent data directory for the downloader"
+  ]
+}

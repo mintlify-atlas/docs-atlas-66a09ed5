@@ -1,0 +1,209 @@
+---
+title: "WebView integration"
+description: "Use WebView in your downloader for web-based authentication and downloads."
+---
+
+<Info>
+  The official downloader template includes a working WebView example. See [github.com/ReVanced/revanced-manager-downloader-template](https://github.com/ReVanced/revanced-manager-downloader-template).
+</Info>
+
+Some app sources require a browser-based login or serve APKs via a standard browser download flow. The downloader API ships a WebView integration that handles this entirely within ReVanced Manager — no external browser required.
+
+## How it works
+
+The WebView integration is built on two layers:
+
+1. **AIDL interfaces** (`IWebView` / `IWebViewEvents`) — used internally to pass commands and events between the host (ReVanced Manager) and the downloader over a binder boundary. These are annotated `@DownloaderHostApi` and are not called directly by downloader code.
+2. **`WebViewScope<T>` and `runWebView`** — the public DSL surface that downloader code uses. You register event handlers on `WebViewScope<T>` and the framework wires everything to the AIDL layer automatically.
+
+---
+
+## runWebView
+
+`runWebView` is a suspend function available inside any `GetScope`. It launches `WebViewFragment` inside ReVanced Manager's `DownloaderActivity`, runs until one of your handlers calls `finish(result)`, and then returns `result`.
+
+```kotlin
+suspend fun <T> GetScope.runWebView(
+    title: String,
+    block: suspend WebViewScope<T>.() -> InitialUrl
+): T
+```
+
+<ParamField path="title" type="String" required>
+  Text displayed in the action bar of the WebView activity.
+</ParamField>
+
+<ParamField path="block" type="suspend WebViewScope<T>.() -> InitialUrl" required>
+  Configure event handlers on the `WebViewScope` receiver and return the URL the WebView should load first.
+</ParamField>
+
+Returns the value passed to `WebViewCallbackScope.finish(result)`. Throws `UserInteractionException` if the user cancels or the activity is dismissed before `finish` is called — see the [API reference](/developer/downloader-api#userinteractionexception) for details.
+
+### Example: redirect-based authentication
+
+```kotlin
+get { packageName, version ->
+    // runWebView suspends until finish() is called inside one of the handlers.
+    val downloadUrl = runWebView<String>("Log in") {
+        pageLoad { url ->
+            // After the user completes login, the site redirects to the download page.
+            if (url.startsWith("https://example.com/download/")) {
+                // Pass the redirect URL back as the result.
+                finish(url)
+            }
+        }
+
+        // Return the URL the WebView loads first.
+        "https://example.com/login"
+    }
+
+    DownloadUrl(downloadUrl) to version
+}
+```
+
+---
+
+## WebViewScope\<T\>
+
+`WebViewScope<T>` is the receiver of the `runWebView` block. Register event handlers with `pageLoad` and `download`, then return the initial URL.
+
+### pageLoad
+
+Called each time the WebView finishes loading a page.
+
+```kotlin
+fun pageLoad(block: PageLoadCallback<T>)
+```
+
+The `block` is `suspend WebViewCallbackScope<T>.(url: String) -> Unit`.
+
+<ParamField path="url" type="String">
+  The URL of the page that just finished loading.
+</ParamField>
+
+### download
+
+Called when the WebView intercepts a file download (i.e. the server responds with a `Content-Disposition: attachment` header or an unrecognised MIME type).
+
+```kotlin
+fun download(block: DownloadCallback<T>)
+```
+
+The `block` is `suspend WebViewCallbackScope<T>.(url: String, mimeType: String, userAgent: String) -> Unit`.
+
+<ParamField path="url" type="String">
+  The URL of the file being downloaded.
+</ParamField>
+
+<ParamField path="mimeType" type="String">
+  The MIME type reported by the server.
+</ParamField>
+
+<ParamField path="userAgent" type="String">
+  The user-agent string active when the download was triggered. Pass this back in the HTTP request when fetching the file so the server does not reject it.
+</ParamField>
+
+---
+
+## WebViewCallbackScope\<T\>
+
+`WebViewCallbackScope<T>` is the receiver of `pageLoad` and `download` callbacks. It extends `Scope`, so `hostPackageName`, `downloaderPackageName`, and `dataDir` are available.
+
+### finish
+
+Finish the WebView activity and return a result to `runWebView`.
+
+```kotlin
+suspend fun finish(result: T)
+```
+
+<ParamField path="result" type="T" required>
+  The value to return from `runWebView`.
+</ParamField>
+
+Calling `finish` causes the `DownloaderActivity` hosting the WebView to finish with `RESULT_OK`. Any coroutines still running inside the WebView scope are cancelled after `runWebView` returns.
+
+### load
+
+Tell the WebView to navigate to a different URL.
+
+```kotlin
+suspend fun load(url: String)
+```
+
+<ParamField path="url" type="String" required>
+  The URL to load.
+</ParamField>
+
+Use this to programmatically redirect the WebView mid-flow, for example after injecting credentials via `pageLoad`.
+
+---
+
+## WebViewDownloader
+
+`WebViewDownloader` is a convenience function that combines `runWebView` with `DownloadUrl` to define a complete downloader in one call. It registers a `download` handler automatically — you only need to return the initial URL from your block.
+
+```kotlin
+fun WebViewDownloader(
+    @StringRes name: Int,
+    block: suspend WebViewScope<DownloadUrl>.(packageName: String, version: String?) -> InitialUrl?
+): DownloaderBuilder<DownloadUrl>
+```
+
+<ParamField path="name" type="Int" required>
+  String resource ID for the downloader display name.
+</ParamField>
+
+<ParamField path="block" type="suspend WebViewScope<DownloadUrl>.(packageName: String, version: String?) -> InitialUrl?" required>
+  Return the URL to open in the WebView, or `null` if the app cannot be found for this package name and version. Returning `null` is equivalent to returning `null` from a `get` block.
+</ParamField>
+
+When the WebView triggers a browser download, `WebViewDownloader` wraps the URL and user-agent into a `DownloadUrl` and calls `finish` for you. The `download` phase then calls `DownloadUrl.toDownloadResult()` to open the connection.
+
+### Example
+
+```kotlin
+val myDownloader = WebViewDownloader(R.string.downloader_name) { packageName, version ->
+    // Navigate to the page for this package. Return null if the app is not hosted here.
+    val path = resolveAppPath(packageName) ?: return@WebViewDownloader null
+
+    pageLoad { url ->
+        // Optional: handle redirects or check for error pages.
+        if (url.contains("/error")) {
+            load("https://example.com$path") // retry
+        }
+    }
+
+    "https://example.com$path"
+}
+```
+
+<Note>
+  `WebViewDownloader` does not expose a `version` parameter inside the WebView. The resolved version is always the `version` argument passed by ReVanced Manager, even if the download URL contains a different version. If you need to resolve the version from the page, use `runWebView` directly and return a `Pair<DownloadUrl, Version?>` as your `GetResult`.
+</Note>
+
+---
+
+## WebViewFragment
+
+`WebViewFragment` is the fragment that hosts the `android.webkit.WebView` inside `DownloaderActivity`. It is annotated `@DownloaderHostApi` — downloader code does not instantiate or reference it directly. `runWebView` and `WebViewDownloader` handle launching it automatically via `requestStartFragment`.
+
+The fragment configures the WebView with:
+
+- JavaScript enabled
+- DOM storage enabled
+- No cache (`LOAD_NO_CACHE`)
+- Content access disabled
+- Cookies cleared on every launch (via `CookieManager.removeAllCookies`)
+
+The back button navigates back in WebView history when possible, and cancels the activity (throwing `UserInteractionException.Activity.Cancelled`) when the history stack is empty.
+
+---
+
+## Type aliases
+
+| Alias | Underlying type | Description |
+|---|---|---|
+| `InitialUrl` | `String` | The URL the WebView loads first. Return type of the `runWebView` / `WebViewDownloader` block. |
+| `PageLoadCallback<T>` | `suspend WebViewCallbackScope<T>.(url: String) -> Unit` | Handler type for `WebViewScope.pageLoad`. |
+| `DownloadCallback<T>` | `suspend WebViewCallbackScope<T>.(url: String, mimeType: String, userAgent: String) -> Unit` | Handler type for `WebViewScope.download`. |

@@ -1,0 +1,59 @@
+---
+title: "Patching apps"
+description: "How to select and apply patches to an Android app using ReVanced Manager."
+---
+
+ReVanced Manager patches apps by injecting modifications directly into the APK on your device. Follow the steps below to patch your first app.
+
+<Warning>
+  Only full APK files are supported. APK bundles (split APKs) cannot be patched. If you downloaded an app from the Play Store using a tool like APK Extractor, make sure it exported a single `.apk` file.
+</Warning>
+
+## Steps to patch an app
+
+<Steps>
+  <Step title="Open the Apps tab">
+    Tap the **Apps** tab in the top navigation bar of ReVanced Manager.
+  </Step>
+  <Step title="Select an app">
+    Tap an app from the list of supported apps, or tap **Select from storage** to load an APK file directly from your device.
+
+    <Note>
+      Selecting from storage is protected by a safeguard. If the option is unavailable, enable the relevant safeguard under **Settings > Advanced**.
+    </Note>
+  </Step>
+  <Step title="Review patch selection">
+    Optionally review and change the selected patches. The default selection is recommended for most users.
+
+    <Tip>
+      Tap the **Reset** button in the bottom right corner of the patch selector to restore the default patch selection. Sticking with defaults avoids compatibility issues.
+    </Tip>
+
+    <Note>
+      Changing the patch selection is protected by a safeguard. Enable **Allow changing patch selection and options** under **Settings > Advanced** to unlock this.
+    </Note>
+  </Step>
+  <Step title="Choose a downloader (optional)">
+    If multiple downloaders are installed, you can select a specific one to download the app. By default, all available downloaders are tried in order.
+  </Step>
+  <Step title="Tap Patch">
+    Tap the **Patch** button to start the patching process. This may take several minutes depending on your device.
+  </Step>
+  <Step title="Follow on-screen instructions">
+    If a patch requires additional input (such as an API key or login), ReVanced Manager will prompt you to complete the required steps.
+  </Step>
+  <Step title="Install the patched app">
+    Once patching completes, tap **Install** to install the patched app on your device. To save the APK file instead, tap the save icon in the bottom left corner.
+  </Step>
+</Steps>
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Managing apps" icon="grid-2" href="/guides/managing-apps">
+    View, re-patch, open, or uninstall your patched apps
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/troubleshooting">
+    Fix common issues with patching and installation
+  </Card>
+</CardGroup>

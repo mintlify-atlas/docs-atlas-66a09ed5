@@ -1,0 +1,70 @@
+---
+title: "Downloader overview"
+description: "Learn how the ReVanced Manager downloader plugin system works."
+---
+
+<Warning>
+  Downloaders execute arbitrary code inside ReVanced Manager's process. Only install downloaders from sources you trust completely.
+</Warning>
+
+A downloader is a standalone Android app that integrates with ReVanced Manager to locate and download APKs for patching. ReVanced Manager communicates with the downloader over an Android bound service, so the two apps operate independently but cooperate at runtime.
+
+## How downloaders work
+
+When ReVanced Manager needs an APK, it binds to the downloader service and calls two operations in sequence:
+
+1. **Get** — the downloader resolves a package name and optional version into an app-specific data object and a resolved version string.
+2. **Download** — the downloader uses that data object to stream the APK back to ReVanced Manager via an `InputStream`.
+
+The type parameter `T` on `DownloaderScope<T>` is the shape of data passed between these two operations. It must implement `Parcelable` so it can cross process boundaries if needed.
+
+## Trust model
+
+Downloaders are regular APKs installed alongside ReVanced Manager. Because they run code inside ReVanced Manager's process, they must be explicitly trusted before use:
+
+- ReVanced Manager shows a dashboard notification when a new downloader is discovered.
+- Trust is granted and revoked under **Settings > Downloads**.
+- Revoking trust prevents the downloader from being used without uninstalling it.
+
+<Note>
+  APIs annotated with `@DownloaderHostApi` are for ReVanced Manager's internal use only. Downloader implementations must not call them. The annotation carries `RequiresOptIn` at error level, so the compiler will reject any accidental use.
+</Note>
+
+## API design
+
+The downloader API is a Kotlin DSL built around `DownloaderScope<T>`. You call the top-level `Downloader()` function, pass a string resource for the display name, and configure `get` and `download` blocks inside the lambda:
+
+```kotlin
+val myDownloader = Downloader<MyAppInfo>(R.string.downloader_name) {
+    get { packageName, version ->
+        // Resolve the app and return data + version, or null if not found.
+        val info = fetchAppInfo(packageName, version) ?: return@get null
+        info to info.version
+    }
+
+    download { data ->
+        // Stream the APK back to ReVanced Manager.
+        val response = fetchDownloadStream(data.downloadUrl)
+        response.inputStream to response.contentLength
+    }
+}
+```
+
+The `get` block runs inside a `GetScope`, which allows asking the user to complete an interactive step (such as logging in) before returning the result. The `download` block runs inside an `InputDownloadScope` and returns a plain `InputStream`.
+
+## Navigation
+
+<CardGroup cols={2}>
+  <Card title="Downloader API reference" icon="code" href="/developer/downloader-api">
+    Complete reference for all types, functions, and scope interfaces in the downloader API.
+  </Card>
+  <Card title="WebView integration" icon="browser" href="/developer/downloader-webview">
+    Use a built-in WebView for web-based authentication and browser-triggered downloads.
+  </Card>
+</CardGroup>
+
+## Downloader template
+
+The official template repository provides a fully working downloader project with Gradle configuration, the API dependency already wired up, and a WebView example:
+
+[github.com/ReVanced/revanced-manager-downloader-template](https://github.com/ReVanced/revanced-manager-downloader-template)

@@ -1,0 +1,88 @@
+---
+title: "Settings"
+description: "Configure ReVanced Manager to match your preferences."
+---
+
+ReVanced Manager exposes several settings screens that let you control its appearance, update behavior, download system, patch configuration, and more.
+
+<AccordionGroup>
+  <Accordion title="General">
+    The **General** screen controls the look and feel of ReVanced Manager.
+
+    - **Language**: Change the language used throughout the app. Defaults to your device's system language.
+    - **Theme**: Choose between light, dark, or system default. On Android 12 and higher you can also enable **Dynamic color** to derive the color scheme from your wallpaper. When dark mode is active, you can additionally enable **Pure black theme** for an AMOLED-friendly background.
+    - **Allow metered networks**: Toggle whether ReVanced Manager is permitted to use mobile data or other metered connections for network requests.
+  </Accordion>
+
+  <Accordion title="Updates">
+    The **Updates** screen controls how ReVanced Manager handles its own updates.
+
+    - **Check for updates**: Tap to manually trigger an update check. By default, ReVanced Manager checks for updates automatically each time it launches and shows a badge on the settings icon when an update is available.
+    - **Enable pre-release versions**: Opt into pre-release builds to receive new features and fixes before they reach stable. See [Updating ReVanced Manager](/guides/updating) for more detail.
+  </Accordion>
+
+  <Accordion title="Downloads">
+    The **Downloads** screen manages the built-in downloader system and its cached app files.
+
+    - **Downloaders**: View and manage the downloader plugins that are currently installed. You can add a new downloader from a local file or a remote URL, and remove any downloader you no longer need.
+    - **Apps**: Browse apps that were previously downloaded by ReVanced Manager. Select one or more entries and tap the delete icon to remove them from local storage.
+  </Accordion>
+
+  <Accordion title="Import & Export">
+    The **Import & Export** screen lets you back up and restore your patch configuration and signing keystore.
+
+    **Keystore**
+
+    Your keystore is used to sign patched apps. The screen displays the current alias and password (tap the eye icon to reveal it). You can copy either value to the clipboard.
+
+    - **Import**: Load a keystore file from storage. You will be prompted for the alias and password.
+    - **Export**: Save the current keystore to a file named `Manager.keystore`.
+
+    <Note>
+      Keep your keystore in a safe place. If you re-patch an app using a different keystore, Android will treat it as a different app and require you to uninstall the existing version first.
+    </Note>
+
+    **Patch selections**
+
+    - **Import**: Load a previously exported patch selection file.
+    - **Export**: Save your current patch selections to a file.
+
+    **Reset**
+
+    Tap **Reset** to clear patch selections, patch options, or both. A confirmation sheet will appear so you can choose exactly what to reset.
+  </Accordion>
+
+  <Accordion title="Advanced">
+    <Warning>
+      The settings below override safety checks built into ReVanced Manager. Changing them can cause patches to fail or produce broken apps. Leave them at their defaults unless you know what you are doing.
+    </Warning>
+
+    **Disable version compatibility check**
+
+    By default, ReVanced Manager only allows patching app versions that patches explicitly declare compatibility with. Disabling this check lets you patch any version, but patches may fail on untested versions.
+
+    **Require suggested app version**
+
+    When enabled, ReVanced Manager automatically enforces the specific app version recommended by your patch selection. Disabling this allows you to patch any version — patches that are incompatible with the chosen version will be skipped silently.
+
+    **Allow changing patch selection and options**
+
+    The default patch selection is enforced to avoid misconfiguration. Enabling this setting lets you freely customize which patches are applied and configure their options. Unexpected behavior may result.
+
+    **Allow using universal patches**
+
+    Patches that do not declare compatibility with any specific app are disabled by default. Enabling this setting allows you to select them, but they may not work correctly on every app.
+
+    **(Experimental) Run patcher in another process**
+
+    Runs the patcher in a separate process, which can increase speed and lift the per-process memory cap. Enable this if you encounter Out of Memory errors during patching. When active, an additional **Memory limit** field appears so you can set a custom limit in MiB.
+
+    **Export debug logs**
+
+    Saves a plain-text log file from ReVanced Manager to a location you choose. Useful when reporting issues.
+  </Accordion>
+
+  <Accordion title="About">
+    The **About** screen shows the current version of ReVanced Manager along with links to the ReVanced website and the ReVanced Manager GitHub repository.
+  </Accordion>
+</AccordionGroup>

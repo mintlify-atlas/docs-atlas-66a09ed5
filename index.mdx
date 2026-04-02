@@ -1,97 +1,68 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "ReVanced Manager"
+description: "Patch Android apps on your device using ReVanced — no PC required."
 ---
 
-## Setting up
+ReVanced Manager is an Android application that lets you apply patches to your favorite apps directly on your device. Download apps, select patches, and install modified versions — all from a single app.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Prerequisites" icon="circle-check" href="/prerequisites">
+    Check what your device needs before getting started
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Installation" icon="download" href="/installation">
+    Download and install ReVanced Manager on your Android device
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Patching Apps" icon="syringe" href="/guides/patching-apps">
+    Learn how to select and apply patches to any Android app
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Troubleshooting" icon="wrench" href="/troubleshooting">
+    Resolve common issues with patching and installation
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## Get started in minutes
 
-Everything you need to create world-class documentation.
+<Steps>
+  <Step title="Check prerequisites">
+    Make sure your device runs Android 8.0 (Oreo) or higher. See [Prerequisites](/prerequisites) for details.
+  </Step>
+  <Step title="Install ReVanced Manager">
+    Download the latest APK from [revanced.app/download](https://revanced.app/download) or [GitHub releases](https://github.com/ReVanced/revanced-manager/releases/latest) and install it.
+  </Step>
+  <Step title="Select an app to patch">
+    Open the **Apps** tab, choose an app to patch, and select your desired patches.
+  </Step>
+  <Step title="Patch and install">
+    Tap **Patch** to begin. Once complete, tap **Install** to install the patched app on your device.
+  </Step>
+</Steps>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## What you can do
 
-## Need inspiration?
+<CardGroup cols={2}>
+  <Card title="Manage patched apps" icon="grid" href="/guides/managing-apps">
+    View, re-patch, open, or uninstall any app you've patched
+  </Card>
+  <Card title="Manage patches" icon="puzzle-piece" href="/guides/managing-patches">
+    Add patch bundles from URLs or local storage
+  </Card>
+  <Card title="Manage downloaders" icon="plug" href="/guides/managing-downloaders">
+    Install and trust downloader plugins to automate app downloads
+  </Card>
+  <Card title="Settings & configuration" icon="sliders" href="/guides/settings">
+    Customize themes, manage updates, import/export configurations
+  </Card>
+</CardGroup>
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+## For developers
+
+Building a downloader plugin or contributing to ReVanced Manager?
+
+<CardGroup cols={2}>
+  <Card title="Downloader API" icon="code" href="/developer/downloader-overview">
+    Create your own downloader plugin for ReVanced Manager
+  </Card>
+  <Card title="Build from source" icon="hammer" href="/developer/building">
+    Compile ReVanced Manager locally using Gradle
+  </Card>
+</CardGroup>

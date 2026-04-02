@@ -1,0 +1,72 @@
+---
+title: "Building from source"
+description: "How to build ReVanced Manager from source using Gradle."
+---
+
+<Info>
+  Development happens on the `dev` branch, which is the primary branch for active development. The `main` branch tracks stable releases.
+</Info>
+
+## Prerequisites
+
+Before building, make sure you have the following installed:
+
+- **Java Development Kit 17** — e.g., [Temurin JDK](https://adoptium.net/temurin/releases/?os=any&arch=any&version=17) from Adoptium
+- **Android SDK** — available via [Android Studio](https://developer.android.com/studio)
+- **Git**
+
+## Build steps
+
+<Steps>
+  <Step title="Install JDK 17">
+    Install Java Development Kit 17 using your preferred method.
+
+    <CodeGroup>
+
+    ```bash WinGet
+    winget install EclipseAdoptium.Temurin.17.JDK
+    ```
+
+    ```bash SDKMAN
+    sdk install java 17.0.18-tem
+    ```
+
+    </CodeGroup>
+  </Step>
+
+  <Step title="Clone the repository">
+    Clone the ReVanced Manager repository and navigate into it.
+
+    ```sh
+    git clone https://github.com/revanced/revanced-manager.git && cd revanced-manager
+    ```
+  </Step>
+
+  <Step title="Build the APK">
+    Run the Gradle wrapper to assemble the release APK.
+
+    ```sh
+    ./gradlew assembleRelease
+    ```
+  </Step>
+
+  <Step title="Locate the APK">
+    Once the build completes, the APK is located at:
+
+    ```
+    app/build/outputs/apk/release/
+    ```
+  </Step>
+</Steps>
+
+<Note>
+  If the build fails due to authentication errors with GitHub Packages, you need to create a personal access token with the `read:packages` scope.
+
+  1. Generate a token at [github.com/settings/tokens](https://github.com/settings/tokens/new?scopes=read:packages&description=ReVanced).
+  2. Add the following to `~/.gradle/gradle.properties`, creating the file if it does not exist:
+
+  ```properties
+  githubPackagesUsername = <GitHub username>
+  githubPackagesPassword = <Personal access token>
+  ```
+</Note>

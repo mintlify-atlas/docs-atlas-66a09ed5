@@ -1,0 +1,55 @@
+---
+title: "Managing downloaders"
+description: "How to install, trust, and manage downloader plugins in ReVanced Manager."
+---
+
+Downloaders are APK-based plugins that integrate with ReVanced Manager to automatically locate and download apps for patching. They are installed and updated just like regular Android apps.
+
+<Warning>
+  Downloaders can execute arbitrary code inside ReVanced Manager. Only install downloaders from sources you trust. ReVanced Manager will always ask you to explicitly trust a downloader before it can run.
+</Warning>
+
+## How downloaders work
+
+When you start the patching process, ReVanced Manager uses installed and trusted downloaders to find and download the target app. By default, all trusted downloaders are tried in order until one succeeds.
+
+ReVanced Manager shows a notification in the dashboard when a newly installed downloader is detected, prompting you to review and trust it.
+
+## Trusting a downloader
+
+<Steps>
+  <Step title="Install the downloader APK">
+    Install the downloader app on your device as you would any other APK.
+  </Step>
+  <Step title="Open the trust prompt">
+    ReVanced Manager will show a notification on the dashboard when it detects the new downloader. Tap the notification to review it.
+  </Step>
+  <Step title="Grant trust">
+    Review the downloader details and tap **Trust** to allow it to run inside ReVanced Manager.
+  </Step>
+</Steps>
+
+You can also manage downloader trust manually:
+
+1. Open **Settings** in ReVanced Manager
+2. Navigate to **Downloads**
+3. View all detected downloaders and toggle trust on or off for each one
+
+## Revoking trust
+
+To revoke trust from a downloader, go to **Settings > Downloads**, find the downloader, and tap **Revoke trust**. The downloader will no longer be used during patching until trusted again.
+
+<Info>
+  Interested in building your own downloader? See the [Downloader API](/developer/downloader-overview) documentation and the [official template](https://github.com/ReVanced/revanced-manager-downloader-template).
+</Info>
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Settings" icon="sliders" href="/guides/settings">
+    Configure ReVanced Manager to your preferences
+  </Card>
+  <Card title="Patching apps" icon="syringe" href="/guides/patching-apps">
+    Use downloaders during the patching workflow
+  </Card>
+</CardGroup>

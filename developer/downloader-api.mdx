@@ -1,0 +1,363 @@
+---
+title: "Downloader API reference"
+description: "Complete API reference for building ReVanced Manager downloader plugins."
+---
+
+<Warning>
+  APIs annotated with `@DownloaderHostApi` are reserved for ReVanced Manager's internal use. Do not call them from a downloader implementation. The annotation is opt-in at error level, so the Kotlin compiler will reject any accidental use.
+</Warning>
+
+## Defining a downloader
+
+Use the top-level `Downloader()` DSL function to create a downloader. It returns a `DownloaderBuilder<T>` that ReVanced Manager instantiates at runtime.
+
+```kotlin
+fun <T : Parcelable> Downloader(@StringRes name: Int, block: DownloaderScope<T>.() -> Unit): DownloaderBuilder<T>
+```
+
+<ParamField path="name" type="Int" required>
+  A string resource ID (`@StringRes`) used as the display name of the downloader in the ReVanced Manager UI.
+</ParamField>
+
+<ParamField path="block" type="DownloaderScope<T>.() -> Unit" required>
+  Lambda that configures the downloader. Call `get` and `download` inside this block.
+</ParamField>
+
+### Minimal example
+
+```kotlin
+val myDownloader = Downloader<MyAppInfo>(R.string.downloader_name) {
+    get { packageName, version ->
+        // Look up the app and return app info + resolved version, or null if not found.
+        val appInfo = fetchAppInfo(packageName, version) ?: return@get null
+        appInfo to appInfo.version
+    }
+
+    download { data ->
+        // Return an InputStream and an optional byte count.
+        val response = fetchDownloadStream(data.downloadUrl)
+        response.inputStream to response.contentLength
+    }
+}
+```
+
+---
+
+## DownloaderScope\<T\>
+
+`DownloaderScope<T>` is the receiver of the `Downloader()` lambda. Use it to register the `get` and `download` handlers and to bind to Android services.
+
+`T` must implement `Parcelable`. It is the data object produced by `get` and consumed by `download`.
+
+### get
+
+Define the lookup function for the downloader. Return `null` if the app cannot be found for the given package name and version.
+
+```kotlin
+fun get(block: suspend GetScope.(packageName: String, version: String?) -> GetResult<T>?)
+```
+
+<ParamField path="packageName" type="String" required>
+  The Android package name of the app to look up (e.g. `com.example.app`).
+</ParamField>
+
+<ParamField path="version" type="String?">
+  The requested version string, or `null` if any version is acceptable. When a version is specified, the version in the returned `GetResult` must match it.
+</ParamField>
+
+The block runs inside a `GetScope`, giving access to `requestStartActivity` and `requestStartFragment` for user-interactive flows.
+
+### download (InputStream API)
+
+Define the download function. Return an `InputStream` for the APK bytes and an optional byte count.
+
+```kotlin
+fun download(block: suspend InputDownloadScope.(data: T) -> DownloadResult)
+```
+
+<ParamField path="data" type="T" required>
+  The data object produced by the `get` block.
+</ParamField>
+
+ReVanced Manager reads the stream and closes it automatically. If you know the file size, return it as the second element of the pair so the UI can show a progress bar.
+
+### download (OutputStream API)
+
+An alternative `download` overload from `Extensions.kt` that receives an `OutputStream` directly. Use this when your HTTP library writes to an output stream rather than exposing an input stream.
+
+```kotlin
+fun <T : Parcelable> DownloaderScope<T>.download(block: suspend OutputDownloadScope.(T, OutputStream) -> Unit)
+```
+
+Inside this block you can call `reportSize(size)` on the `OutputDownloadScope` receiver to report the total byte count before writing.
+
+```kotlin
+download { data, outputStream ->
+    val connection = URL(data.url).openConnection() as HttpURLConnection
+    reportSize(connection.contentLength.toLong())
+    connection.inputStream.copyTo(outputStream)
+}
+```
+
+### useService
+
+Bind to an Android service for the duration of the block. The service is unbound automatically when the block completes or throws.
+
+```kotlin
+suspend fun <R : Any?> useService(intent: Intent, block: suspend (IBinder) -> R): R
+```
+
+<ParamField path="intent" type="Intent" required>
+  Identifies the service to bind to.
+</ParamField>
+
+<ParamField path="block" type="suspend (IBinder) -> R" required>
+  Receives the `IBinder` returned by the service. The service remains bound until the block returns.
+</ParamField>
+
+Binding times out after 10 seconds. If the service does not connect within that window, a `TimeoutCancellationException` is thrown.
+
+There is also an inline reified extension in `Extensions.kt` that avoids constructing the `Intent` manually:
+
+```kotlin
+suspend inline fun <reified SERVICE : Service, R : Any?> DownloaderScope<*>.useService(
+    noinline block: suspend (IBinder) -> R
+): R
+```
+
+```kotlin
+// Bind by type instead of building an Intent manually.
+useService<MyDownloaderService> { binder ->
+    val service = IMyService.Stub.asInterface(binder)
+    service.doSomething()
+}
+```
+
+---
+
+## Scope interfaces
+
+All blocks run inside a scope that provides contextual properties. The scope hierarchy is:
+
+```
+Scope
+└── GetScope            (get block)
+└── BaseDownloadScope
+    └── InputDownloadScope   (download block with InputStream API)
+    └── OutputDownloadScope  (download block with OutputStream API)
+```
+
+### Scope
+
+The base interface inherited by all scopes.
+
+<ResponseField name="hostPackageName" type="String">
+  Package name of ReVanced Manager (e.g. `app.revanced.manager`). Use this to build intents targeting ReVanced Manager components.
+</ResponseField>
+
+<ResponseField name="downloaderPackageName" type="String">
+  Package name of the downloader itself. Use this to build intents targeting components inside the downloader.
+</ResponseField>
+
+<ResponseField name="dataDir" type="File">
+  A persistent directory private to this downloader where it can store credentials, caches, or other state between sessions.
+</ResponseField>
+
+### GetScope
+
+Extends `Scope`. Available inside the `get` block.
+
+#### requestStartActivity
+
+Ask the user to complete an activity before the `get` block continues. Execution suspends until the activity finishes.
+
+```kotlin
+suspend fun requestStartActivity(intent: Intent): Intent?
+```
+
+<ParamField path="intent" type="Intent" required>
+  The activity to start. The activity must finish with `Activity.RESULT_OK` for this function to return normally.
+</ParamField>
+
+Returns the result `Intent` from the activity, or `null` if the activity did not return one.
+
+Throws `UserInteractionException` if the request fails — see the [UserInteractionException](#userinteractionexception) section below.
+
+There is also a convenience extension in `Extensions.kt` that builds the intent from a reified activity type:
+
+```kotlin
+suspend inline fun <reified ACTIVITY : Activity> GetScope.requestStartActivity(): Intent?
+```
+
+```kotlin
+// Launch a login activity defined in the downloader package.
+val result = requestStartActivity<LoginActivity>()
+```
+
+#### requestStartFragment
+
+Launch a `Fragment` inside ReVanced Manager's `DownloaderActivity`. The fragment can reside in the downloader package.
+
+```kotlin
+suspend fun requestStartFragment(clazz: Class<out Fragment>, args: Bundle?)
+```
+
+<ParamField path="clazz" type="Class<out Fragment>" required>
+  The fragment class to instantiate. If the class belongs to the downloader's classloader, ReVanced Manager loads it from the downloader APK.
+</ParamField>
+
+<ParamField path="args" type="Bundle?">
+  Arguments passed to the fragment via `Fragment.setArguments`.
+</ParamField>
+
+The inline reified extension in `Extensions.kt` removes the need to pass the class explicitly:
+
+```kotlin
+suspend inline fun <reified T : Fragment> GetScope.requestStartFragment(args: Bundle?)
+```
+
+```kotlin
+requestStartFragment<MyAuthFragment>(bundleOf("token" to savedToken))
+```
+
+### OutputDownloadScope
+
+Extends `BaseDownloadScope`. Available only inside the `download(OutputStream)` overload.
+
+#### reportSize
+
+Report the total size of the download so ReVanced Manager can display accurate progress.
+
+```kotlin
+suspend fun reportSize(size: Long)
+```
+
+<ParamField path="size" type="Long" required>
+  Total number of bytes that will be written to the output stream.
+</ParamField>
+
+---
+
+## Type aliases
+
+| Alias | Underlying type | Description |
+|---|---|---|
+| `Size` | `Long` | Byte count of a download. |
+| `DownloadResult` | `Pair<InputStream, Size?>` | Return type of the `download` (InputStream API) block. |
+| `Version` | `String` | A version string (e.g. `"18.29.38"`). |
+| `GetResult<T>` | `Pair<T, Version?>` | Return type of the `get` block: the data object and the resolved version. |
+
+---
+
+## Built-in parcelables
+
+The API ships two `Parcelable` data classes for common use cases. You can use these as the type parameter `T` instead of defining your own.
+
+### Package
+
+A minimal data class holding a package name and version. Suitable for downloaders where the package name and version are sufficient to perform the download.
+
+```kotlin
+@Parcelize
+data class Package(val name: String, val version: String) : Parcelable
+```
+
+<ResponseField name="name" type="String">
+  The Android package name.
+</ResponseField>
+
+<ResponseField name="version" type="String">
+  The resolved version string.
+</ResponseField>
+
+### DownloadUrl
+
+Holds a download URL and optional HTTP headers. Calling `toDownloadResult()` opens an `HttpURLConnection`, reads the `Content-Length` response header as the size, and returns the result as a `DownloadResult`. The server must return a `Content-Length` header — a missing or non-numeric value will throw a `NumberFormatException`.
+
+```kotlin
+@Parcelize
+data class DownloadUrl(val url: String, val headers: Map<String, String> = emptyMap()) : Parcelable
+```
+
+<ResponseField name="url" type="String">
+  The fully qualified download URL.
+</ResponseField>
+
+<ResponseField name="headers" type="Map<String, String>">
+  HTTP headers to include in the request. Defaults to an empty map.
+</ResponseField>
+
+```kotlin
+val myDownloader = Downloader<DownloadUrl>(R.string.downloader_name) {
+    get { packageName, version ->
+        val url = resolveUrl(packageName, version) ?: return@get null
+        DownloadUrl(url) to version
+    }
+
+    download { data ->
+        data.toDownloadResult()
+    }
+}
+```
+
+---
+
+## UserInteractionException
+
+`UserInteractionException` is a sealed class thrown by `requestStartActivity` when the user interaction cannot complete normally.
+
+```kotlin
+sealed class UserInteractionException(message: String) : Exception(message)
+```
+
+### RequestDenied
+
+The user chose to skip this downloader entirely for the current operation.
+
+```kotlin
+class RequestDenied : UserInteractionException("Request denied by user")
+```
+
+Catch this if you want to fall back to a different approach, or let it propagate to have ReVanced Manager skip your downloader.
+
+### Activity.Cancelled
+
+The activity was cancelled (the user pressed back or the system dismissed it).
+
+```kotlin
+class Cancelled : Activity("Interaction cancelled")
+```
+
+### Activity.NotCompleted
+
+The activity finished with a result code other than `Activity.RESULT_OK` and `Activity.RESULT_CANCELED`.
+
+```kotlin
+class NotCompleted(val resultCode: Int, val intent: Intent?) : Activity("Unexpected activity result code: $resultCode")
+```
+
+<ResponseField name="resultCode" type="Int">
+  The result code returned by the activity.
+</ResponseField>
+
+<ResponseField name="intent" type="Intent?">
+  The result `Intent` from the activity, if any.
+</ResponseField>
+
+### Handling exceptions
+
+```kotlin
+get { packageName, version ->
+    try {
+        val result = requestStartActivity<LoginActivity>()
+        // Use result to retrieve session token, etc.
+        fetchAppInfo(packageName, version, sessionToken)
+    } catch (e: UserInteractionException.RequestDenied) {
+        // User skipped — return null to signal app not found via this downloader.
+        null
+    } catch (e: UserInteractionException.Activity.Cancelled) {
+        // User cancelled the login screen — return null or rethrow.
+        null
+    }
+}
+```

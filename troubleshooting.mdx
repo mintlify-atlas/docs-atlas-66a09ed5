@@ -1,0 +1,40 @@
+---
+title: "Troubleshooting"
+description: "Solutions to common issues with ReVanced Manager."
+---
+
+<AccordionGroup>
+  <Accordion title="Patching fails or patched app crashes">
+    Work through the following steps in order:
+
+    1. **Update ReVanced Manager.** An outdated installation is the most common cause of patching failures. See [Updating ReVanced Manager](/guides/updating).
+    2. **Reset safeguard settings.** Go to **Settings** > **Advanced** and restore all safeguard toggles to their default values.
+    3. **Reset patch options.** If any patch has configurable options, reset them to their defaults or make sure they are filled in correctly. You can do this from **Settings** > **Import & Export** > **Reset**.
+    4. **Use a full APK file.** ReVanced Manager cannot patch [APK bundles](https://developer.android.com/guide/app-bundle/app-bundle-format). Make sure the file you are providing is a single, self-contained APK.
+  </Accordion>
+
+  <Accordion title="Patches fail to load">
+    There are two likely causes:
+
+    - The selected file is not in the ReVanced API format. Verify that you are using a patch bundle from a compatible source.
+    - The remote URL is not reachable. Check your internet connection and confirm the URL is correct and accessible.
+  </Accordion>
+
+  <Accordion title="Patching takes too long">
+    Patching is CPU- and memory-intensive and can take several minutes, especially on older or lower-end devices. To improve performance:
+
+    - Make sure your device has enough free storage space. Low storage can slow down or stall the process.
+    - Free up RAM by closing other apps before starting the patcher.
+    - Be patient — slower devices may need five minutes or more to complete patching.
+  </Accordion>
+
+  <Accordion title="Out of Memory error during patching">
+    Enable **(Experimental) Run patcher in another process** under [Settings > Advanced](/guides/settings). This moves the patcher to a separate process with a higher memory ceiling and can resolve Out of Memory errors.
+  </Accordion>
+
+  <Accordion title="App not installing after patching">
+    - **Check available storage.** Android requires free space to install the patched APK.
+    - **Uninstall the original app first.** If you are replacing an existing installation and are not using the patch-in-place option, Android may reject the install due to a signature mismatch. Uninstall the original version, then install the patched one.
+    - **Use a consistent keystore.** Every time you patch an app, it is signed with your keystore. If you re-patched using a different keystore (for example, after regenerating it), the signature will not match the installed version. Uninstall the existing app and reinstall, or restore your original keystore from a backup via [Settings > Import & Export](/guides/settings).
+  </Accordion>
+</AccordionGroup>
